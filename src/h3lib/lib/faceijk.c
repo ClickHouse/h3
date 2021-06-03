@@ -490,6 +490,9 @@ void _hex2dToGeo(const Vec2d* v, int face, int res, int substrate,
  * @param g The spherical coordinates of the cell center point.
  */
 void _faceIjkToGeo(const FaceIJK* h, int res, GeoCoord* g) {
+    int baseCell = H3_GET_BASE_CELL(h->face);
+    if (baseCell < 0 || baseCell >= NUM_BASE_CELLS)
+        return;
     Vec2d v;
     _ijkToHex2d(&h->coord, &v);
     _hex2dToGeo(&v, h->face, res, 0, g);

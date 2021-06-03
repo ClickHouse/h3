@@ -838,6 +838,9 @@ void _h3ToFaceIjk(H3Index h, FaceIJK* fijk) {
  * @param g The spherical coordinates of the H3 cell center.
  */
 void H3_EXPORT(h3ToGeo)(H3Index h3, GeoCoord* g) {
+    int baseCell = H3_GET_BASE_CELL(h3);
+    if (baseCell < 0 || baseCell >= NUM_BASE_CELLS)
+        return;
     FaceIJK fijk;
     _h3ToFaceIjk(h3, &fijk);
     _faceIjkToGeo(&fijk, H3_GET_RESOLUTION(h3), g);
