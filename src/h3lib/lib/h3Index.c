@@ -841,7 +841,7 @@ H3Error _h3ToFaceIjk(H3Index h, FaceIJK *fijk) {
 H3Error H3_EXPORT(cellToLatLng)(H3Index h3, LatLng *g) {
     int baseCell = H3_GET_BASE_CELL(h3);
     if (baseCell < 0 || baseCell >= NUM_BASE_CELLS)
-        return;
+        return  E_CELL_INVALID;
     FaceIJK fijk;
     H3Error e = _h3ToFaceIjk(h3, &fijk);
     if (e) {
