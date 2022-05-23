@@ -118,6 +118,7 @@ static const Direction NEW_ADJUSTMENT_II[7][7] = {
  *
  * Current digit -> direction -> new ap7 move (at coarser level).
  */
+__attribute__((no_sanitize("address")))
 static const Direction NEW_DIGIT_III[7][7] = {
     {CENTER_DIGIT, K_AXES_DIGIT, J_AXES_DIGIT, JK_AXES_DIGIT, I_AXES_DIGIT,
      IK_AXES_DIGIT, IJ_AXES_DIGIT},
@@ -139,6 +140,7 @@ static const Direction NEW_DIGIT_III[7][7] = {
  *
  * Current digit -> direction -> new ap7 move (at coarser level).
  */
+__attribute__((no_sanitize("address")))
 static const Direction NEW_ADJUSTMENT_III[7][7] = {
     {CENTER_DIGIT, CENTER_DIGIT, CENTER_DIGIT, CENTER_DIGIT, CENTER_DIGIT,
      CENTER_DIGIT, CENTER_DIGIT},
