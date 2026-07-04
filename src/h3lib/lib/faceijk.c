@@ -30,6 +30,7 @@
 #include "coordijk.h"
 #include "h3Index.h"
 #include "latLng.h"
+#include "mathExtensions.h"
 #include "vec3d.h"
 
 /** square root of 7 and inverse square root of 7 */
@@ -418,9 +419,11 @@ void _geoToHex2d(const LatLng *g, int res, int *face, Vec2d *v) {
 
     // we now have (r, theta) in hex2d with theta ccw from x-axes
 
-    // convert to local x,y
-    v->x = r * cos(theta);
-    v->y = r * sin(theta);
+    // convert to local x,y (both the sine and cosine of theta are needed)
+    double sinTheta, cosTheta;
+    _sincos(theta, &sinTheta, &cosTheta);
+    v->x = r * cosTheta;
+    v->y = r * sinTheta;
 }
 
 /**
