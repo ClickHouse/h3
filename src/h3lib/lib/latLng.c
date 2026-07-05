@@ -209,9 +209,15 @@ double H3_EXPORT(greatCircleDistanceM)(const LatLng *a, const LatLng *b) {
  * @return The azimuth in radians from p1 to p2.
  */
 double _geoAzimuthRads(const LatLng *p1, const LatLng *p2) {
-    return atan2(cos(p2->lat) * sin(p2->lng - p1->lng),
-                 cos(p1->lat) * sin(p2->lat) -
-                     sin(p1->lat) * cos(p2->lat) * cos(p2->lng - p1->lng));
+    // Compute each sin/cos pair together and reuse cos(p2->lat) and the
+    // longitude difference instead of evaluating them twice.
+    double sinP1Lat, cosP1Lat, sinP2Lat, cosP2Lat, sinDLng, cosDLng;
+    _sincos(p1->lat, &sinP1Lat, &cosP1Lat);
+    _sincos(p2->lat, &sinP2Lat, &cosP2Lat);
+    _sincos(p2->lng - p1->lng, &sinDLng, &cosDLng);
+
+    return atan2(cosP2Lat * sinDLng,
+                 cosP1Lat * sinP2Lat - sinP1Lat * cosP2Lat * cosDLng);
 }
 
 /**
@@ -254,8 +260,14 @@ void _geoAzDistanceRads(const LatLng *p1, double az, double distance,
             p2->lng = constrainLng(p1->lng);
     } else  // not due north or south
     {
-        sinlat = sin(p1->lat) * cos(distance) +
-                 cos(p1->lat) * sin(distance) * cos(az);
+        // Each of p1->lat, the distance, and the azimuth is used for both its
+        // sine and its cosine, so compute the pairs together and reuse them.
+        double sinP1Lat, cosP1Lat, sinDist, cosDist, sinAz, cosAz;
+        _sincos(p1->lat, &sinP1Lat, &cosP1Lat);
+        _sincos(distance, &sinDist, &cosDist);
+        _sincos(az, &sinAz, &cosAz);
+
+        sinlat = sinP1Lat * cosDist + cosP1Lat * sinDist * cosAz;
         if (sinlat > 1.0) sinlat = 1.0;
         if (sinlat < -1.0) sinlat = -1.0;
         p2->lat = asin(sinlat);
@@ -269,9 +281,9 @@ void _geoAzDistanceRads(const LatLng *p1, double az, double distance,
             p2->lng = 0.0;
         } else {
             double invcosp2lat = 1.0 / cos(p2->lat);
-            sinlng = sin(az) * sin(distance) * invcosp2lat;
-            coslng = (cos(distance) - sin(p1->lat) * sin(p2->lat)) /
-                     cos(p1->lat) * invcosp2lat;
+            sinlng = sinAz * sinDist * invcosp2lat;
+            coslng =
+                (cosDist - sinP1Lat * sin(p2->lat)) / cosP1Lat * invcosp2lat;
             if (sinlng > 1.0) sinlng = 1.0;
             if (sinlng < -1.0) sinlng = -1.0;
             if (coslng > 1.0) coslng = 1.0;
