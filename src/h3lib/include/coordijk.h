@@ -362,9 +362,11 @@ static inline Direction _unitIjkToDigit(const CoordIJK *ijk) {
     _ijkNormalize(&c);
 
     Direction digit = INVALID_DIGIT;
-    for (Direction i = CENTER_DIGIT; i < NUM_DIGITS; i++) {
+    // Iterate with an int rather than a Direction: incrementing an enum is
+    // valid C but not C++, and this header is included by C++ code.
+    for (int i = CENTER_DIGIT; i < NUM_DIGITS; i++) {
         if (_ijkMatches(&c, &UNIT_VECS[i])) {
-            digit = i;
+            digit = (Direction)i;
             break;
         }
     }
