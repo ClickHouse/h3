@@ -27,6 +27,19 @@
 #include "h3Assert.h"
 #include "h3api.h"
 
+// Computes sin(x) and cos(x) with one call where the C library provides
+// sincos: compilers merge such a pair into a sincos call only for some
+// libcs (glibc, but not musl), and the two share one argument reduction.
+static inline void sinAndCos(double x, double *sinX, double *cosX) {
+#if defined(__linux__)
+    void sincos(double, double *, double *);
+    sincos(x, sinX, cosX);
+#else
+    *sinX = sin(x);
+    *cosX = cos(x);
+#endif
+}
+
 // Cagnoli contribution for edge arc x to y, following d3-geo’s
 // area implementation:
 // https://github.com/d3/d3-geo/blob/8c53a90ae70c94bace73ecb02f2c792c649c86ba/src/area.js#L51-L70
@@ -34,8 +47,11 @@ static inline double cagnoli(LatLng x, LatLng y) {
     x.lat = x.lat / 2.0 + M_PI / 4.0;
     y.lat = y.lat / 2.0 + M_PI / 4.0;
 
-    double sa = sin(x.lat) * sin(y.lat);
-    double ca = cos(x.lat) * cos(y.lat);
+    double sinXLat, cosXLat, sinYLat, cosYLat;
+    sinAndCos(x.lat, &sinXLat, &cosXLat);
+    sinAndCos(y.lat, &sinYLat, &cosYLat);
+    double sa = sinXLat * sinYLat;
+    double ca = cosXLat * cosYLat;
 
     // For an edge crossing the antimeridian, the raw difference is close to
     // +-2*pi, and the true (tiny) longitude step is lost to the ulp of 2*pi.
@@ -46,8 +62,8 @@ static inline double cagnoli(LatLng x, LatLng y) {
     if (d > M_PI || d < -M_PI) {
         d = (y.lng - copysign(M_PI, y.lng)) - (x.lng - copysign(M_PI, x.lng));
     }
-    double sd = sin(d);
-    double cd = cos(d);
+    double sd, cd;
+    sinAndCos(d, &sd, &cd);
 
     return -2.0 * atan2(sa * sd, sa * cd + ca);
 }
