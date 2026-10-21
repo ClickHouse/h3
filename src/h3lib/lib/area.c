@@ -26,6 +26,7 @@
 #include "constants.h"
 #include "h3Assert.h"
 #include "h3api.h"
+#include "mathExtensions.h"
 
 // Cagnoli contribution for edge arc x to y, following d3-geo’s
 // area implementation:
@@ -34,8 +35,11 @@ static inline double cagnoli(LatLng x, LatLng y) {
     x.lat = x.lat / 2.0 + M_PI / 4.0;
     y.lat = y.lat / 2.0 + M_PI / 4.0;
 
-    double sa = sin(x.lat) * sin(y.lat);
-    double ca = cos(x.lat) * cos(y.lat);
+    double sinXLat, cosXLat, sinYLat, cosYLat;
+    _sincos(x.lat, &sinXLat, &cosXLat);
+    _sincos(y.lat, &sinYLat, &cosYLat);
+    double sa = sinXLat * sinYLat;
+    double ca = cosXLat * cosYLat;
 
     // For an edge crossing the antimeridian, the raw difference is close to
     // +-2*pi, and the true (tiny) longitude step is lost to the ulp of 2*pi.
@@ -46,8 +50,8 @@ static inline double cagnoli(LatLng x, LatLng y) {
     if (d > M_PI || d < -M_PI) {
         d = (y.lng - copysign(M_PI, y.lng)) - (x.lng - copysign(M_PI, x.lng));
     }
-    double sd = sin(d);
-    double cd = cos(d);
+    double sd, cd;
+    _sincos(d, &sd, &cd);
 
     return -2.0 * atan2(sa * sd, sa * cd + ca);
 }
