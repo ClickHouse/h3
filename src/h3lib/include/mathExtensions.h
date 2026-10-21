@@ -35,12 +35,26 @@
  * Many H3 coordinate transforms need both sin(x) and cos(x) of the same angle.
  * Computing them together lets the math library share the argument reduction
  * and polynomial evaluation, which is roughly twice as fast as two independent
- * sin()/cos() calls, while returning identical values. The compiler builtin
- * lowers to a single libm `sincos` call where one exists and falls back to
- * separate sin()/cos() otherwise, so this stays portable.
+ * sin()/cos() calls, while returning identical values.
+ *
+ * On Linux the libm `sincos` is called directly. `__builtin_sincos`, a
+ * `sin`/`cos` pair the optimizer merges by itself, and even a plain call to
+ * a function named `sincos` all become the `llvm.sincos` intrinsic, which
+ * LLVM lowers to a `sincos` call only for the C libraries it knows to have
+ * one (glibc, Android, Fuchsia) and splits back into separate `sin` and
+ * `cos` calls for the others, musl among them. Declaring the function under
+ * another C name with the `sincos` assembler label keeps the compiler from
+ * recognizing it, so the call reaches libm as written. `sincos` is a GNU
+ * extension that every Linux libc provides. Elsewhere the builtin is used.
  */
+#if defined(__linux__)
+void _h3Sincos(double x, double *s, double *c) __asm__("sincos");
+#endif
+
 static inline void _sincos(double x, double *s, double *c) {
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__linux__)
+    _h3Sincos(x, s, c);
+#elif defined(__GNUC__) || defined(__clang__)
     __builtin_sincos(x, s, c);
 #else
     *s = sin(x);
